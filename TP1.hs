@@ -14,13 +14,17 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities t = nub ([city1 | (city1, _ , _ ) <- t] ++ [city2 | (_ , city2, _) <- t])
+cities r = nub ([city1 | (city1, _ , _ ) <- r] ++ [city2 | (_ , city2, _) <- r])
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = 
+areAdjacent [] c1 c2 = False
+areAdjacent ((x,y,_):xs) c1 c2 
+    | (c1 == x && c2 == y) || (c2 == y && c1 == x) = True
+    | otherwise = areAdjacent xs c1 c2
+
 
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = undefined
+distance = 
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent = undefined
