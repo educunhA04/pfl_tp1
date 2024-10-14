@@ -32,13 +32,23 @@ distance ((x,y,z):xs) c1 c2
 
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
-adjacent = undefined
+adjacent r c = [(y, dist) | (x, y, dist) <- r, c == x] ++ [(x, dist) | (x, y, dist) <- r, c == y]
 
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance _ [] = Just 0  -- Empty path has a distance of 0
+pathDistance _ [_] = Just 0 -- Path with only one city has a distance of 0
+pathDistance r (x:y:xs) = case distance r x y of
+    Nothing -> Nothing -- If no road is found between consecutive cities
+    Just dist -> case pathDistance r (y:xs) of
+        Nothing -> Nothing -- If a subsequent segment is not connected
+        Just rest -> Just (dist + rest) -- Add the distance and continue
+
 
 rome :: RoadMap -> [City]
 rome = undefined
+
+pairs :: RoadMap -> [(City, Int)]
+pairs r = []
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
