@@ -1,6 +1,7 @@
---import qualified Data.List
---import qualified Data.Array
---import qualified Data.Bits
+import qualified Data.List
+import Data.List (nub)
+import qualified Data.Array
+import qualified Data.Bits
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -13,10 +14,10 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 
 cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities t = nub ([city1 | (city1, _ , _ ) <- t] ++ [city2 | (_ , city2, _) <- t])
 
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = undefined
+areAdjacent = 
 
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance = undefined
