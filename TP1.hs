@@ -16,6 +16,7 @@ type RoadMap = [(City,City,Distance)]
 cities :: RoadMap -> [City]
 cities r = nub ([city1 | (city1, _ , _ ) <- r] ++ [city2 | (_ , city2, _) <- r])
 
+
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent [] c1 c2 = False
 areAdjacent ((x,y,_):xs) c1 c2 
@@ -24,7 +25,11 @@ areAdjacent ((x,y,_):xs) c1 c2
 
 
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = 
+distance [] c1 c2 = Nothing
+distance ((x,y,z):xs) c1 c2
+    | (c1 == x && c2 == y) || (c1 == y && c2 == x) = Just(z)
+    |otherwise = distance xs c1 c2
+
 
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent = undefined
