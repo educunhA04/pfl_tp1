@@ -1,5 +1,4 @@
 import qualified Data.List
-import Data.List (nub)
 import qualified Data.Array
 import qualified Data.Bits
 
@@ -13,8 +12,21 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
 
+--função nub criada na tp2
+mynub :: Eq a => [a] -> [a]
+mynub [] = []
+mynub (x:xs) = x : [y | y <- xs, y /= x]
+
+--função elem criada na tp2
+myelem :: Eq a => a -> [a] -> Bool
+myelem _ [] = False
+myelem x (y:ys)
+    | x==y = True
+    | otherwise = myelem x ys
+
+
 cities :: RoadMap -> [City]
-cities r = nub ([city1 | (city1, _ , _ ) <- r] ++ [city2 | (_ , city2, _) <- r])
+cities r = mynub ([city1 | (city1, _ , _ ) <- r] ++ [city2 | (_ , city2, _) <- r])
 
 
 areAdjacent :: RoadMap -> City -> City -> Bool
@@ -48,7 +60,19 @@ maximuml :: RoadMap -> Int
 maximuml r = maximum [length(adjacent r c1) | (c1,c2,dist) <- r]
 
 rome :: RoadMap -> [City]
-rome r = nub [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
+rome r = mynub [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
+
+
+--dfs 
+dfs :: RoadMap -> City -> [City] -> [City]
+dfs r c visited 
+ | myelem c visited = visited
+ | otherwise = foldl (\acc (adjCity, _) -> dfs r adjCity acc) (c : visited) (adjacent r c)
+
+
+-- função para chegar a todas as reachable cities a partir de uma determinada city
+reachableCities :: RoadMap -> City -> [City]
+reachableCities r c = dfs r c []
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
