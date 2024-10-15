@@ -48,7 +48,7 @@ maximuml :: RoadMap -> Int
 maximuml r = maximum [length(adjacent r c1) | (c1,c2,dist) <- r]
 
 rome :: RoadMap -> [City]
-rome r = [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
+rome r = nub [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
