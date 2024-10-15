@@ -2,6 +2,7 @@ import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
 
+
 -- PFL 2024/2025 Practical assignment 1
 
 -- Uncomment the some/all of the first three lines to import the modules, do not change the code of these lines.
@@ -15,7 +16,7 @@ type RoadMap = [(City,City,Distance)]
 --função nub criada na tp2
 mynub :: Eq a => [a] -> [a]
 mynub [] = []
-mynub (x:xs) = x : [y | y <- xs, y /= x]
+mynub (x:xs) = x : mynub (filter (/= x) xs)
 
 --função elem criada na tp2
 myelem :: Eq a => a -> [a] -> Bool
@@ -69,13 +70,15 @@ dfs r c visited
  | myelem c visited = visited
  | otherwise = foldl (\acc (adjCity, _) -> dfs r adjCity acc) (c : visited) (adjacent r c)
 
-
 -- função para chegar a todas as reachable cities a partir de uma determinada city
 reachableCities :: RoadMap -> City -> [City]
 reachableCities r c = dfs r c []
 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected r
+    | null (cities r) = True  -- If there are no cities, it's trivially strongly connected
+    | otherwise = all (\c -> length (reachableCities r c) == length (cities r)) (cities r)
+
 
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
