@@ -44,11 +44,11 @@ pathDistance r (x:y:xs) = case distance r x y of
         Just rest -> Just (dist + rest) -- Add the distance and continue
 
 
-rome :: RoadMap -> [City]
-rome = undefined
+maximuml :: RoadMap -> Int
+maximuml r = maximum [length(adjacent r c1) | (c1,c2,dist) <- r]
 
-pairs :: RoadMap -> [(City, Int)]
-pairs r = []
+rome :: RoadMap -> [City]
+rome r = [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
