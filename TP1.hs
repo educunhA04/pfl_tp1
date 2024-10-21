@@ -81,31 +81,24 @@ isStronglyConnected r
 
 
 -- 8. shortestPath :: RoadMap -> City -> City -> [Path], computes all
--- shortest paths [RL99, BG20] connecting the two cities given as input.
--- Note that there may be more than one path with the same total distance.
--- If there are no paths between the input cities, then return an empty list.
--- Note that the (only) shortest path between a city c and itself is [c].
 
--- Função auxiliar para fazer a busca em largura (BFS) e encontrar os caminhos mais curtos
+newPaths :: RoadMap -> City -> Path -> [(City, Distance)]
+newPaths r c1 p = [(city, d) | (city, d) <- adjacent r c1, not (myelem city p)]
+
+pathDistances :: RoadMap -> City -> City -> [(Path, Distance)]
+pathDistances r c1 c2 = [(path, dist) | path <- shortestPathAux r c1 c2 [c1] 0, Just dist <- [pathDistance r path]]
+
 shortestPathAux :: RoadMap -> City -> City -> Path -> Distance -> [Path]
 shortestPathAux r c1 c2 path dist
-    | c1 == c2 = [reverse path] -- Se a cidade de partida for igual à de destino, caminho encontrado
-    | otherwise = 
-        let neighbors = adjacent r c1
-            -- Filtrar as cidades vizinhas que ainda não foram visitadas no caminho atual
-            newPaths = [(city, d) | (city, d) <- neighbors, not (myelem city path)]
-        in concatMap (\(city, d) -> shortestPathAux r city c2 (city:path) (dist + d)) newPaths
+    | c1 == c2 = [reverse path] 
+    | otherwise = concatMap (\(city, d) -> shortestPathAux r city c2 (city:path) (dist + d)) (newPaths r c1 path)
 
--- Função principal que utiliza a função auxiliar para encontrar todos os caminhos mais curtos
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath r c1 c2
-    | c1 == c2 = [[c1]] -- Se as cidades são iguais, o caminho mais curto é apenas a cidade
-    | otherwise = 
-        let allPaths = shortestPathAux r c1 c2 [c1] 0
-            -- Filtrar apenas os caminhos que têm uma distância válida (Just dist)
-            pathDistances = [(path, dist) | path <- allPaths, Just dist <- [pathDistance r path]]
-            minDist = minimum (map snd pathDistances) -- Encontra a menor distância
-        in [path | (path, dist) <- pathDistances, dist == minDist] -- Retorna todos os caminhos com a menor distância
+    | c1 == c2 = [[c1]] 
+    | otherwise = [path | (path, dist) <- (pathDistances r c1 c2), dist == minimum (map snd (pathDistances r c1 c2))] 
+
+
 
 
 
