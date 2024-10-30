@@ -1,7 +1,7 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-
+import Debug.Trace
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -54,7 +54,7 @@ pathDistance r (x:y:xs) = case distance r x y of
     Nothing -> Nothing -- If no road is found between consecutive cities
     Just dist -> case pathDistance r (y:xs) of
         Nothing -> Nothing -- If a subsequent segment is not connected
-        Just rest -> Just (dist + rest) -- Add the distance and continue
+        Just rest -> Just (dist + rest)
 
 
 maximuml :: RoadMap -> Int
@@ -100,20 +100,49 @@ shortestPath r c1 c2
 
 
 -- 9. travelSales :: RoadMap -> Path, computes a path that visits all cities in the graph and returns to the starting city, with the smallest total distance
+-- Helper function to find the minimum element by a given comparison function
+findMinimum :: (a -> a -> Ordering) -> [a] -> a
+findMinimum _ [x] = x
+findMinimum cmp (x:y:xs) =
+    case cmp x y of
+        LT -> findMinimum cmp (x:xs)
+        _  -> findMinimum cmp (y:xs)
 
+-- Helper function to find the closest city not yet visited
+closestCity :: RoadMap -> City -> [City] -> Maybe (City, Distance)
+closestCity r c visited = 
+    let unvisited = filter (\(city, _) -> not (myelem city visited)) (adjacent r c)
+    in if null unvisited then Nothing else Just (findMinimum (\(_, d1) (_, d2) -> compare d1 d2) unvisited)
+
+-- Greedy TSP approximation
+travelSalesAux :: RoadMap -> City -> [City] -> Path -> Distance -> [(Path, Distance)]
+travelSalesAux _ _ [] path totalDist = [(reverse path, totalDist)]  -- Retorna o caminho quando todas as cidades foram visitadas
+travelSalesAux r currentCity unvisitedCities path totalDist =
+    trace ("Visiting: " ++ currentCity ++ ", Path: " ++ show path ++ ", TotalDist: " ++ show totalDist) $
+    let nextCities = filter (\(city, _) -> not (myelem city path)) (adjacent r currentCity)
+    in if null nextCities then trace ("No more cities to visit from: " ++ currentCity) []  -- Nenhum caminho encontrado
+       else concatMap (\(nextCity, dist) -> travelSalesAux r nextCity (filter (/= nextCity) unvisitedCities) (nextCity : path) (totalDist + dist)) nextCities
+
+-- Main TSP function that starts from an initial city
+travelSalesFromCity :: RoadMap -> City -> Path
+travelSalesFromCity r startCity =
+    trace ("Starting travelSales from " ++ startCity ++ " with RoadMap: " ++ show r) $
+    let allPaths = travelSalesAux r startCity (filter (/= startCity) (cities r)) [startCity] 0
+        validPaths = filter (\(_, dist) -> dist /= maxBound) allPaths
+    in case validPaths of
+        [] -> trace "No valid path found" []  -- Nenhum caminho encontrado
+        _  -> let (path, totalDist) = findMinimum (\(_, d1) (_, d2) -> compare d1 d2) validPaths
+              in case distance r (last path) startCity of  -- Tenta encontrar o caminho de volta ao início
+                    Nothing -> trace "No return path found" []  -- Se não houver retorno, retorna caminho vazio
+                    Just dist -> trace ("Path found: " ++ show (path ++ [startCity]) ++ ", TotalDist: " ++ show (totalDist + dist)) (path ++ [startCity])  -- Completa o ciclo de retorno
+
+-- Main TSP function that tries starting from different cities
 travelSales :: RoadMap -> Path
-travelSales r = case cities r of
-    [] -> []
-    (startCity:_) -> findShortestPath startCity (cities r)
-    where
-        findShortestPath :: City -> [City] -> Path
-        findShortestPath start cities = case filter (isValidPath cities) (shortestPath r start start) of
-            [] -> []
-            (path:_) -> path
-
-        isValidPath :: [City] -> Path -> Bool
-        isValidPath cities path = length (mynub path) == length cities + 1
->>>>>>> Commit inicial do TP1.hs
+travelSales r =
+    let allCities = cities r
+        allPaths = map (travelSalesFromCity r) allCities
+        validPaths = filter (not . null) allPaths
+    in if null validPaths then [] else head validPaths
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
@@ -127,33 +156,8 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 
+
 gTest3 = [("0","1",4),("2","3",2)]
 
-main :: IO ()
-main = do
-    print $ cities gTest1  -- Should return ["7","6","8","2","5","0","1","3","4"]
-    print $ cities gTest2  -- Should return ["0","1","2","3"]
-    print $ areAdjacent gTest1 "0" "1"  -- Should return True
-    print $ areAdjacent gTest1 "0" "2"  -- Should return False
-    print $ areAdjacent gTest2 "0" "2"  -- Should return True
-    print $ distance gTest1 "0" "1"  -- Should return Just 4
-    print $ distance gTest1 "0" "2"  -- Should return Nothing
-    print $ distance gTest2 "0" "2"  -- Should return Just 15
-    print $ adjacent gTest1 "0"  -- Should return [("1",4),("7",8)]
-    print $ adjacent gTest1 "7"  -- Should return [("6",1),("8",7),("1",11)]
-    print $ pathDistance gTest1 ["0","7","6","5","4"]  -- Should return Just 21
-    print $ pathDistance gTest1 ["0","7","1","2","5","4"]  -- Should return Just 27
-    print $ pathDistance gTest1 ["0","7","1","2","3"]  -- Should return Nothing
-    print $ pathDistance gTest1 ["0","7","1","2","5"]  -- Should return Nothing
-    print $ maximuml gTest1  -- Should return 3
-    print $ rome gTest1  -- Should return ["7"]
-    print $ rome gTest2  -- Should return ["0"]
-    print $ isStronglyConnected gTest1  -- Should return False
-    print $ isStronglyConnected gTest2  -- Should return True
-    print $ shortestPath gTest1 "0" "4"  -- Should return [["0","1","7","6","5","4"],["0","1","2","5","4"],["0","7","6","5","4"],["0","7","8","2","5","4"],["0","7","1","2","5","4"]]
-    print $ shortestPath gTest2 "0" "3"  -- Should return [["0","3"]]
-    print $ shortestPath gTest3 "0" "3"  -- Should return []7
-    print $ travelSales gTest1  -- Should return ["0","1","7","6","5","4","3","2","8"]
-    print $ travelSales gTest2  -- Should return ["0","1","3","2"]
-    print $ travelSales gTest3  -- Should return ["0","1","3","2"]
->>>>>>> Commit inicial do TP1.hs
+gTest4 ::RoadMap
+gTest4 = [("0", "1", 1),("1", "3", 1), ("2", "3",1),("0","2",1)]
