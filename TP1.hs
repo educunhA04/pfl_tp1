@@ -118,23 +118,21 @@ closestCity r c visited =
 travelSalesAux :: RoadMap -> City -> [City] -> Path -> Distance -> [(Path, Distance)]
 travelSalesAux _ _ [] path totalDist = [(reverse path, totalDist)]  -- Retorna o caminho quando todas as cidades foram visitadas
 travelSalesAux r currentCity unvisitedCities path totalDist =
-    trace ("Visiting: " ++ currentCity ++ ", Path: " ++ show path ++ ", TotalDist: " ++ show totalDist) $
     let nextCities = filter (\(city, _) -> not (myelem city path)) (adjacent r currentCity)
-    in if null nextCities then trace ("No more cities to visit from: " ++ currentCity) []  -- Nenhum caminho encontrado
+    in if null nextCities then []  -- Nenhum caminho encontrado
        else concatMap (\(nextCity, dist) -> travelSalesAux r nextCity (filter (/= nextCity) unvisitedCities) (nextCity : path) (totalDist + dist)) nextCities
 
 -- Main TSP function that starts from an initial city
 travelSalesFromCity :: RoadMap -> City -> Path
 travelSalesFromCity r startCity =
-    trace ("Starting travelSales from " ++ startCity ++ " with RoadMap: " ++ show r) $
     let allPaths = travelSalesAux r startCity (filter (/= startCity) (cities r)) [startCity] 0
         validPaths = filter (\(_, dist) -> dist /= maxBound) allPaths
     in case validPaths of
-        [] -> trace "No valid path found" []  -- Nenhum caminho encontrado
+        [] -> []  -- Nenhum caminho encontrado
         _  -> let (path, totalDist) = findMinimum (\(_, d1) (_, d2) -> compare d1 d2) validPaths
               in case distance r (last path) startCity of  -- Tenta encontrar o caminho de volta ao início
-                    Nothing -> trace "No return path found" []  -- Se não houver retorno, retorna caminho vazio
-                    Just dist -> trace ("Path found: " ++ show (path ++ [startCity]) ++ ", TotalDist: " ++ show (totalDist + dist)) (path ++ [startCity])  -- Completa o ciclo de retorno
+                    Nothing -> []  -- Se não houver retorno, retorna caminho vazio
+                    Just dist -> path ++ [startCity]  -- Completa o ciclo de retorno
 
 -- Main TSP function that tries starting from different cities
 travelSales :: RoadMap -> Path
@@ -155,8 +153,6 @@ gTest2 :: RoadMap
 gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2","3",30)]
 
 gTest3 :: RoadMap -- unconnected graph
-
-
 gTest3 = [("0","1",4),("2","3",2)]
 
 gTest4 ::RoadMap
