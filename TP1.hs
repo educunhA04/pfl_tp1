@@ -1,7 +1,6 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-import Debug.Trace
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -103,16 +102,19 @@ shortestPath r c1 c2
 -- Helper function to find the minimum element by a given comparison function
 findMinimum :: (a -> a -> Ordering) -> [a] -> a
 findMinimum _ [x] = x
-findMinimum cmp (x:y:xs) =
-    case cmp x y of
-        LT -> findMinimum cmp (x:xs)
-        _  -> findMinimum cmp (y:xs)
+findMinimum cmp (x:y:xs)
+    | cmp x y == LT = findMinimum cmp (x:xs)
+    | otherwise = findMinimum cmp (y:xs)
 
--- Helper function to find the closest city not yet visited
+
+-- Helper function to find the closest city not yet visited - Nearest Neighbour heuristic   
 closestCity :: RoadMap -> City -> [City] -> Maybe (City, Distance)
 closestCity r c visited = 
-    let unvisited = filter (\(city, _) -> not (myelem city visited)) (adjacent r c)
-    in if null unvisited then Nothing else Just (findMinimum (\(_, d1) (_, d2) -> compare d1 d2) unvisited)
+    let unvisited = filter (\(city, _) -> not (myelem city visited)) (adjacent r c) --verifica se a cidade já foi visitada 
+    in case unvisited of
+    [] -> Nothing  -- Nenhuma cidade não visitada
+    _  -> Just (findMinimum (\(_, d1) (_, d2) -> compare d1 d2) unvisited)  -- Retorna a cidade mais próxima
+
 
 -- Greedy TSP approximation
 travelSalesAux :: RoadMap -> City -> [City] -> Path -> Distance -> [(Path, Distance)]
@@ -126,10 +128,9 @@ travelSalesAux r currentCity unvisitedCities path totalDist =
 travelSalesFromCity :: RoadMap -> City -> Path
 travelSalesFromCity r startCity =
     let allPaths = travelSalesAux r startCity (filter (/= startCity) (cities r)) [startCity] 0
-        validPaths = filter (\(_, dist) -> dist /= maxBound) allPaths
-    in case validPaths of
+    in case allPaths of
         [] -> []  -- Nenhum caminho encontrado
-        _  -> let (path, totalDist) = findMinimum (\(_, d1) (_, d2) -> compare d1 d2) validPaths
+        _  -> let (path, totalDist) = findMinimum (\(_, d1) (_, d2) -> compare d1 d2) allPaths
               in case distance r (last path) startCity of  -- Tenta encontrar o caminho de volta ao início
                     Nothing -> []  -- Se não houver retorno, retorna caminho vazio
                     Just dist -> path ++ [startCity]  -- Completa o ciclo de retorno
@@ -157,3 +158,29 @@ gTest3 = [("0","1",4),("2","3",2)]
 
 gTest4 ::RoadMap
 gTest4 = [("0", "1", 1),("1", "3", 1), ("2", "3",1),("0","2",1)]
+
+{-
+-- Grafo com 5 cidades em um ciclo
+gTest5 :: RoadMap
+gTest5 = [("0", "1", 2), ("1", "2", 3), ("2", "3", 4), ("3", "4", 5), ("4", "0", 1)]
+
+-- Grafo com 6 cidades e várias conexões
+gTest6 :: RoadMap
+gTest6 = [("0", "1", 10), ("0", "2", 15), ("0", "3", 20), ("1", "2", 35), ("1", "3", 25), ("2", "3", 30), ("3", "4", 10), ("4", "5", 5), ("5", "0", 10)]
+
+-- Grafo com 4 cidades em uma linha
+gTest7 :: RoadMap
+gTest7 = [("0", "1", 5), ("1", "2", 10), ("2", "3", 15)]
+
+-- Grafo com 7 cidades e conexões aleatórias
+gTest8 :: RoadMap
+gTest8 = [("0", "1", 7), ("0", "2", 9), ("0", "5", 14), ("1", "2", 10), ("1", "3", 15), ("2", "3", 11), ("2", "5", 2), ("3", "4", 6), ("4", "5", 9), ("4", "6", 3), ("5", "6", 8)]
+
+-- Grafo com 8 cidades e conexões densas
+gTest9 :: RoadMap
+gTest9 = [("0", "1", 1), ("0", "2", 2), ("0", "3", 3), ("0", "4", 4), ("0", "5", 5), ("0", "6", 6), ("0", "7", 7), ("1", "2", 1), ("1", "3", 2), ("1", "4", 3), ("1", "5", 4), ("1", "6", 5), ("1", "7", 6), ("2", "3", 1), ("2", "4", 2), ("2", "5", 3), ("2", "6", 4), ("2", "7", 5), ("3", "4", 1), ("3", "5", 2), ("3", "6", 3), ("3", "7", 4), ("4", "5", 1), ("4", "6", 2), ("4", "7", 3), ("5", "6", 1), ("5", "7", 2), ("6", "7", 1)]
+
+-- Grafo com 9 cidades e algumas conexões
+gTest10 :: RoadMap
+gTest10 = [("0", "1", 4), ("0", "2", 8), ("1", "2", 11), ("1", "3", 8), ("2", "4", 7), ("3", "4", 2), ("3", "5", 4), ("4", "5", 14), ("4", "6", 9), ("5", "6", 10), ("6", "7", 2), ("7", "8", 6), ("7", "0", 1), ("8", "2", 7), ("8", "6", 6)]
+-}
