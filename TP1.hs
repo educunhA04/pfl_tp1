@@ -37,11 +37,13 @@ fromJust :: Maybe a -> a
 fromJust (Just x) = x
 fromJust Nothing = error "Nothing"
 
---cities function - 1
+-- cities function - 1
+-- Returns a list of all unique cities in the RoadMap
 cities :: RoadMap -> [City]
 cities r = mynub ([city1 | (city1, _ , _ ) <- r] ++ [city2 | (_ , city2, _) <- r])
 
---areAdjacent function - 2
+-- areAdjacent function - 2
+-- Checks if two cities are adjacent in the RoadMap
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent [] c1 c2 = False
 areAdjacent ((x,y,_):xs) c1 c2 
@@ -49,7 +51,8 @@ areAdjacent ((x,y,_):xs) c1 c2
     | otherwise = areAdjacent xs c1 c2
 
 
---distance function - 3
+-- distance function - 3
+-- Finds the distance between two cities in the RoadMap
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance [] c1 c2 = Nothing
 distance ((x,y,z):xs) c1 c2
@@ -57,12 +60,14 @@ distance ((x,y,z):xs) c1 c2
     |otherwise = distance xs c1 c2
 
 
---adjacent function - 4
+-- adjacent function - 4
+-- Returns a list of adjacent cities and their distances for a given city
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent r c = [(y, dist) | (x, y, dist) <- r, c == x] ++ [(x, dist) | (x, y, dist) <- r, c == y]
 
 
---pathDistance function - 5
+-- pathDistance function - 5
+-- Calculates the total distance of a given path in the RoadMap
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance _ [] = Just 0  -- Empty path has a distance of 0
 pathDistance _ [_] = Just 0 -- Path with only one city has a distance of 0
@@ -72,24 +77,28 @@ pathDistance r (x:y:xs) = case distance r x y of
         Nothing -> Nothing -- If a subsequent segment is not connected
         Just rest -> Just (dist + rest)
 
---rome function - 6
+-- rome function - 6
+-- Returns the maximum number of adjacent cities for any city in the RoadMap
 maximuml :: RoadMap -> Int
 maximuml r = maximum [length(adjacent r c1) | (c1,c2,dist) <- r]
 
+-- Returns a list of cities with the maximum number of adjacent cities
 rome :: RoadMap -> [City]
 rome r = mynub [c1 | (c1,c2,dist) <- r, length(adjacent r c1) == maximuml r] 
 
 
---isStronglyConnected function - 7
+-- isStronglyConnected function - 7
+-- Depth-first search to find all reachable cities from a given city
 dfs :: RoadMap -> City -> [City] -> [City]
 dfs r c visited 
  | myelem c visited = visited
  | otherwise = foldl (\acc (adjCity, _) -> dfs r adjCity acc) (c : visited) (adjacent r c)
 
--- função para chegar a todas as reachable cities a partir de uma determinada city
+-- Returns all reachable cities from a given city
 reachableCities :: RoadMap -> City -> [City]
 reachableCities r c = dfs r c []
 
+-- Checks if the RoadMap is strongly connected
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected r
     | null (cities r) = True  -- If there are no cities, it's trivially strongly connected
@@ -143,7 +152,7 @@ shortestPathAux r current goal dist path
     validNextCities = filter (\(c, _) -> not (myelem c path)) (adjacent r current)
 
 
--- Modified function to get all shortest paths
+-- Function to get all shortest paths
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath r c1 c2
   | c1 == c2 = [[c1]]
